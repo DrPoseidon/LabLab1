@@ -11,7 +11,7 @@ export default {
   */
   target: 'static',
   router: {
-    base: '/KLab1/'
+    base: '/LabLab1/'
   },
   /*
   ** Headers of the page
