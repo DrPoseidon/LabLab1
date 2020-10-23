@@ -1,36 +1,21 @@
 <template>
   <div class="container">
-    <div v-if="success" class="A">
-      <div class="a_text">
-        A=
-      </div>
-      <div class="a_row">
-        <div v-for="(el,index) in firstMatrix" :key="index">
-          <div style="display:flex">
-            <div v-for="(el1,index1) in el" :key="index1">
-              <div class="a_row_el">
-                <div v-if="index !=0 && index1 !=0">
-                  {{ el1.toFixed(3) }}
-                </div>
-                <div v-else>
-                  {{ el1 }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div v-if="!success">
+      <b-button @click="fill = true">
+        Заполнить
+      </b-button>
     </div>
-
     <div v-if="success" class="Y">
       <div class="y_text">
         Y=
       </div>
       <div class="y_row">
         <div v-for="(el,index) in y" :key="index">
-          <div v-for="(el1,index1) in el" :key="index1">
-            <div class="y_row_el">
-              {{ el1.toFixed(3) }}
+          <div class="y_row_el">
+            <div v-for="(el1,index1) in el" :key="index1">
+              <div class="y_row_el1">
+                {{ el1.toFixed(3) }}
+              </div>
             </div>
           </div>
         </div>
@@ -53,12 +38,8 @@
     <div v-if="success == false">
       Укажите количество оборудования, используемого при производстве <b-input v-if="success == false" v-model="top" type="number" class="input" />
     </div>
-    <div v-if="!success">
-      <b-button @click="fill = true">
-        Заполнить
-      </b-button>
-    </div>
-    <div v-if="err != ''" class="error_div">
+
+    <div v-if="err != '' && isError" class="error_div">
       {{ err }}
     </div>
     <div v-if="success == false" class="matrix">
@@ -168,22 +149,28 @@ export default {
       r.forEach((el) => {
         console.log(el)
         el.forEach((i) => {
-          if (i == '') {
+          if (!i) {
             console.log('error')
             this.err = 'Проверьте правильность введенных значений'
             this.isError = true
           }
         })
       })
+      if (!this.isError) {
+        return true
+      }
     },
     ifErr (r) {
       r.forEach((el) => {
-        if (el == '') {
+        if (!el) {
           console.log('error')
           this.err = 'Проверьте правильность введенных значений'
           this.isError = true
         }
       })
+      if (!this.isError) {
+        return true
+      }
     },
     simMethod (simMatrix, emptyMatrix, mEl) {
       let k = 0
@@ -337,6 +324,7 @@ export default {
       // const k = 0
     },
     calculate () {
+      this.isError = false
       let mEl = false
       let prof = false
       let wH = false
@@ -346,125 +334,132 @@ export default {
         prof = [4.2, 5, 9]
         wH = [150, 120.3, 100, 130]
       } else {
-        mEl = this.matrix_elements
-        prof = this.profit
-        wH = this.working_hours
+        this.ifErr_matr(this.matrix_elements)
+        this.ifErr(this.profit)
+        this.ifErr(this.working_hours)
+        if (this.isError != true) {
+          mEl = this.matrix_elements
+          prof = this.profit
+          wH = this.working_hours
+        }
       }
+      if (this.isError != true) {
+        mEl.forEach((el) => {
+          el.forEach((el1) => {
+            if (typeof el1 == 'string') {
+              el1 = parseFloat(el1)
+            }
+          })
+        })
 
-      mEl.forEach((el) => {
-        el.forEach((el1) => {
-          if (typeof el1 == 'string') {
-            el1 = parseFloat(el1)
+        prof.forEach((el) => {
+          if (typeof el == 'string') {
+            el = parseFloat(el)
           }
         })
-      })
 
-      prof.forEach((el) => {
-        if (typeof el == 'string') {
-          el = parseFloat(el)
-        }
-      })
-
-      wH.forEach((el) => {
-        if (typeof el == 'string') {
-          el = parseFloat(el)
-        }
-      })
-
-      const simMatrix = []
-      const emptyMatrix = []
-      for (let i = 0; i < wH.length + 2; i++) {
-        simMatrix.push([])
-        for (let j = 0; j < prof.length + 2 + mEl[0].length; j++) {
-          if (i == 0 && j >= 2) {
-            simMatrix[i][j] = `x${j - 1}`
-          } else if (i == 0 && j == 0) {
-            simMatrix[i][j] = ''
-          } else if (i == 0 && j == 1) {
-            simMatrix[i][j] = 'B'
-          } else if (i != 0 && i != wH.length + 1 && j == 0) {
-            simMatrix[i][j] = `x${i + mEl.length}`
-          } else if (i != 0 && i == wH.length + 1 && j == 0) {
-            simMatrix[i][j] = 'f(x)'
-          } else {
-            simMatrix[i].push(0)
+        wH.forEach((el) => {
+          if (typeof el == 'string') {
+            el = parseFloat(el)
           }
-        }
-      }
+        })
 
-      for (let i = 0; i < wH.length + 2; i++) {
-        emptyMatrix.push([])
-        for (let j = 0; j < prof.length + 2 + mEl[0].length; j++) {
-          if (i == 0 && j >= 2) {
-            emptyMatrix[i][j] = `x${j - 1}`
-          } else if (i == 0 && j == 0) {
-            emptyMatrix[i][j] = ''
-          } else if (i == 0 && j == 1) {
-            emptyMatrix[i][j] = 'B'
-          } else if (i != 0 && i != wH.length + 1 && j == 0) {
-            emptyMatrix[i][j] = `x${i + mEl.length}`
-          } else if (i != 0 && i == wH.length + 1 && j == 0) {
-            emptyMatrix[i][j] = 'f(x)'
-          } else {
-            emptyMatrix[i].push(0)
-          }
-        }
-      }
-
-      for (let i = 0; i < simMatrix.length; i++) {
-        for (let j = 0; j < simMatrix[i].length; j++) {
-          if (i != 0 && j != 0) {
-            if (i != simMatrix.length - 1) {
-              if (j == 1) {
-                simMatrix[i][j] = wH[i - 1]
-              } else if (j < mEl.length + 2) {
-                simMatrix[i][j] = mEl[j - 2][i - 1]
-              } else if (j >= mEl.length + 1) {
-                if (j - mEl.length - 1 == i) {
-                  simMatrix[i][j] = 1
-                } else {
-                  simMatrix[i][j] = 0
-                }
-              }
-            } else if (j <= prof.length + 1) {
-              if (j == 1) {
-                simMatrix[i][j] = 0
-              }
-              simMatrix[i][j + 1] = -prof[j - 1]
+        const simMatrix = []
+        const emptyMatrix = []
+        for (let i = 0; i < wH.length + 2; i++) {
+          simMatrix.push([])
+          for (let j = 0; j < prof.length + 2 + mEl[0].length; j++) {
+            if (i == 0 && j >= 2) {
+              simMatrix[i][j] = `x${j - 1}`
+            } else if (i == 0 && j == 0) {
+              simMatrix[i][j] = ''
+            } else if (i == 0 && j == 1) {
+              simMatrix[i][j] = 'B'
+            } else if (i != 0 && i != wH.length + 1 && j == 0) {
+              simMatrix[i][j] = `x${i + mEl.length}`
+            } else if (i != 0 && i == wH.length + 1 && j == 0) {
+              simMatrix[i][j] = 'f(x)'
             } else {
-              simMatrix[i][j] = 0
+              simMatrix[i].push(0)
             }
           }
         }
-      }
-      const firstMatrix = []
-      for (let i = 0; i < simMatrix.length; i++) {
-        firstMatrix.push([])
-        for (let j = 0; j < simMatrix[i].length; j++) {
-          firstMatrix[i].push(simMatrix[i][j])
-        }
-      }
-      this.firstMatrix = firstMatrix
-      const xes = this.simMethod(simMatrix, emptyMatrix, mEl)
-      this.xes = xes
 
-      for (let i = 0; i < firstMatrix.length; i++) {
-        for (let j = 0; j < firstMatrix[i].length; j++) {
-          if (j < mEl.length + 2 && j > 1 && j != 0 && i != 0) {
-            firstMatrix[i][j] = xes[firstMatrix[0][j]] * firstMatrix[i][j]
+        for (let i = 0; i < wH.length + 2; i++) {
+          emptyMatrix.push([])
+          for (let j = 0; j < prof.length + 2 + mEl[0].length; j++) {
+            if (i == 0 && j >= 2) {
+              emptyMatrix[i][j] = `x${j - 1}`
+            } else if (i == 0 && j == 0) {
+              emptyMatrix[i][j] = ''
+            } else if (i == 0 && j == 1) {
+              emptyMatrix[i][j] = 'B'
+            } else if (i != 0 && i != wH.length + 1 && j == 0) {
+              emptyMatrix[i][j] = `x${i + mEl.length}`
+            } else if (i != 0 && i == wH.length + 1 && j == 0) {
+              emptyMatrix[i][j] = 'f(x)'
+            } else {
+              emptyMatrix[i].push(0)
+            }
           }
         }
-      }
 
-      const y = []
-      for (let i = 0; i < firstMatrix.length - 2; i++) {
-        y.push([])
-        for (let j = 0; j < mEl.length; j++) {
-          y[i].push(firstMatrix[i + 1][j + 2])
+        for (let i = 0; i < simMatrix.length; i++) {
+          for (let j = 0; j < simMatrix[i].length; j++) {
+            if (i != 0 && j != 0) {
+              if (i != simMatrix.length - 1) {
+                if (j == 1) {
+                  simMatrix[i][j] = wH[i - 1]
+                } else if (j < mEl.length + 2) {
+                  simMatrix[i][j] = mEl[j - 2][i - 1]
+                } else if (j >= mEl.length + 1) {
+                  if (j - mEl.length - 1 == i) {
+                    simMatrix[i][j] = 1
+                  } else {
+                    simMatrix[i][j] = 0
+                  }
+                }
+              } else if (j <= prof.length + 1) {
+                if (j == 1) {
+                  simMatrix[i][j] = 0
+                }
+                simMatrix[i][j + 1] = -prof[j - 1]
+              } else {
+                simMatrix[i][j] = 0
+              }
+            }
+          }
         }
+        const firstMatrix = []
+        for (let i = 0; i < simMatrix.length; i++) {
+          firstMatrix.push([])
+          for (let j = 0; j < simMatrix[i].length; j++) {
+            firstMatrix[i].push(simMatrix[i][j])
+          }
+        }
+        this.firstMatrix = firstMatrix
+        console.log(this.firstMatrix)
+        const xes = this.simMethod(simMatrix, emptyMatrix, mEl)
+        this.xes = xes
+
+        for (let i = 0; i < firstMatrix.length; i++) {
+          for (let j = 0; j < firstMatrix[i].length; j++) {
+            if (j < mEl.length + 2 && j > 1 && j != 0 && i != 0) {
+              firstMatrix[i][j] = xes[firstMatrix[0][j]] * firstMatrix[i][j]
+            }
+          }
+        }
+
+        const y = []
+        for (let i = 0; i < firstMatrix.length - 2; i++) {
+          y.push([])
+          for (let j = 0; j < mEl.length; j++) {
+            y[i].push(firstMatrix[i + 1][j + 2])
+          }
+        }
+        this.y = y
+        this.success = true
       }
-      this.y = y
-      this.success = true
     }
   }
 }
@@ -527,9 +522,6 @@ input::-webkit-inner-spin-button {
   margin: 5px;
 }
 .y_row{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
 }
 .a_row{
   display: flex;
@@ -537,14 +529,13 @@ input::-webkit-inner-spin-button {
   align-items: center;
 }
 .y_row_el,.a_row_el{
+display: flex;
+flex-direction: row;
+}
+.y_row_el1{
   border: 2px solid black;
   margin: 10px;
-  min-width: 60px;
-  height: 60px;
-  padding: 5px;
-  align-items: center;
-  display: flex;
-  flex-direction: row;
+  min-width: 50px;
 }
 .Y,.A{
   display: flex;
