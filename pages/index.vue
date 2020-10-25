@@ -486,8 +486,8 @@ export default {
 }
 .mitem{
   margin: 5px 2px;
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   text-align: center;
 }
 input::-webkit-outer-spin-button,
